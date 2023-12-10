@@ -2,7 +2,7 @@
 ---------------------------------------
 REPOSITORY LINK: https://github.com/sentairider0/pintos-anon-master
 ---------------------------------------
-//* PROJECT 1 ADVANCED SCHEDULER: FAIL 20/27 *//
+// PROJECT 1 ADVANCED SCHEDULER: FAIL 20/27 //
 
 I've tried a number of algorithms and newly added code lines for my files (synch.c, thread.c, thread.h) but unfortunately, the results return all the same. I've only passed tests/threads/alarm-single; tests/threads/alarm-multiple; tests/threads/alarm-simultaneous; tests/threads/alarm-zero; 
 tests/threads/alarm-negative; tests/threads/mlfqs-fair-2; and tests/threads/mlfqs-fair-20. Thus, failed to complete Advanced Scheduler.
@@ -71,83 +71,6 @@ int thread_get_recent_cpu(void)
 }
 
 /*line 607-684: additional part, I don't know how to explain*/
-/*function to update the load_avg, which is a global variable.
-  formula: load_avg = (59/60)*load_avg + (1/60)*ready_threads*/
-void load_avg_update(void)
-{
-  size_t num_threads = thread_current() == idle_thread ? list_size(&ready_list) : (list_size(&ready_list) + 1);
-  fx_p former = FP_DIV_INT(FP_MUL_INT(load_avg, 59), 60);
-  fx_p latter = FP_DIV_INT(CONVERT2FP(num_threads), 60);
-  load_avg = former + latter;
-}
-
-/*function to update the recent_cpu of all the thread
-  formula: recent_cpu = (2*load_avg)/(2*load_avg + 1) * recent_cpu + nice.*/
-void recent_cpu_update(void)
-{
-  struct thread *temp_thread;
-  struct list_elem *iter = list_begin(&all_list);
-  while (iter != list_end(&all_list))
-  {
-    temp_thread = list_entry(iter, struct thread, allelem);
-    //Some students have reported that multiplying load_avg by recent_cpu directly can cause overflow.
-    if (temp_thread != idle_thread)
-    {
-      fx_p fraction = FP_DIV(FP_MUL_INT(load_avg, 2), FP_ADD_INT(FP_MUL_INT(load_avg, 2), 1));
-      temp_thread->recent_cpu = FP_ADD_INT(FP_MUL(fraction, temp_thread->recent_cpu), temp_thread->nice);
-    }
-    iter = list_next(iter);
-  }
-}
-
-/*function to update the priority of all the thread
-  formula: priority =  PRI_MAX - (recent_cpu / 4) - (nice * 2).*/
-void priority_update(void)
-{
-  struct thread *temp_thread;
-  struct list_elem *iter = list_begin(&all_list);
-  while (iter != list_end(&all_list))
-  {
-    temp_thread = list_entry(iter, struct thread, allelem);
-    /*Some students have reported that multiplying load_avg by recent_cpu directly can cause overflow.*/
-    if (temp_thread != idle_thread)
-    {
-      temp_thread->priority = CONVERT2INT_ZERO(FP_SUB_INT(FP_SUB(CONVERT2FP(PRI_MAX), FP_DIV_INT(temp_thread->recent_cpu, 4)), temp_thread->nice * 2));
-
-      /*The calculated priority is always adjusted to lie in the valid range PRI_MIN to PRI_MAX.*/
-      if (temp_thread->priority > PRI_MAX)
-        temp_thread->priority = PRI_MAX;
-      if (temp_thread->priority < PRI_MIN)
-        temp_thread->priority = PRI_MIN;
-    }
-    iter = list_next(iter);
-  }
-
-}
-
-/*function to update the priority of the given thread
-  formula: priority =  PRI_MAX - (recent_cpu / 4) - (nice * 2).*/
-void priority_update_one(struct thread *t)
-{
-  if (t == idle_thread)
-    return;
-  
-  t->priority = CONVERT2INT_ZERO(FP_SUB_INT(FP_SUB(CONVERT2FP(PRI_MAX), FP_DIV_INT(t->recent_cpu, 4)), t->nice * 2));
-
-  //The calculated priority is always adjusted to lie in the valid range PRI_MIN to PRI_MAX.
-  if (t->priority > PRI_MAX)
-    t->priority = PRI_MAX;
-  if (t->priority < PRI_MIN)
-    t->priority = PRI_MIN;
-}
-
-/*function to increase the given thread's recent_cpu by 1*/
-void recent_cpu_increase1(struct thread *t)
-{
-  if (t != idle_thread)
-    thread_current()->recent_cpu = FP_ADD_INT(thread_current()->recent_cpu, 1);
-  return;
-}
 
 * thread.h *
 
